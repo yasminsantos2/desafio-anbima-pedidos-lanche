@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres-lanches
+    environment:
+      POSTGRES_DB: pedidos_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "32213115"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - lanches-network
+
+  app:
+    build: .
+    container_name: app-lanches
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/pedidos_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=32213115
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+    networks:
+      - lanches-network
+
+volumes:
+  postgres_data:
+
+networks:
+  lanches-network:
+    driver: bridge
