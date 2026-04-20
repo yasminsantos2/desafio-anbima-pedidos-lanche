@@ -26,4 +26,17 @@ public class PedidoController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    // MÓDULO B - API de consulta
+    // REQUISITO: GET /pedidos → Listar todos os pedidos ✅
+    @GetMapping
+    public java.util.List<Pedido> listar() {
+        return service.listarTodos();
+    }
+
+    // REQUISITO: GET /pedidos/{id} → Consultar um pedido específico ✅
+    @GetMapping("/{id}")
+    public ResponseEntity<Pedido> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(service.buscarPorId(id));
+    }
 }

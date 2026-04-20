@@ -2,8 +2,10 @@ package com.anbima.lanches.service;
 
 import com.anbima.lanches.domain.Pedido;
 import com.anbima.lanches.domain.StatusPedido;
+import com.anbima.lanches.dto.PedidoEvent;
 import com.anbima.lanches.repository.PedidoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,12 +17,14 @@ import java.util.List;
 public class PedidoService {
 
     private final PedidoRepository repository;
+    private final RabbitTemplate rabbitTemplate;
 
     @Transactional
     public Pedido salvar(Pedido pedido) {
         return repository.save(pedido);
     }
 
+    // MÓDULO B - REQUISITO: Listar todos os pedidos ✅
     public List<Pedido> listarTodos() {
         return repository.findAll();
     }
@@ -48,7 +52,17 @@ public class PedidoService {
         pedido.setValor(valorTotal);
         pedido.setStatus(StatusPedido.RECEBIDO);
 
-        return repository.save(pedido);
+        Pedido pedidoSalvo = repository.save(pedido);
+
+        // REQUISITO: Enviar evento para o RabbitMQ
+        PedidoEvent event = new PedidoEvent(pedidoSalvo.getId());
+        rabbitTemplate.convertAndSend(
+                com.anbima.lanches.infra.amqp.RabbitMQConfig.EXCHANGE_NAME,
+                com.anbima.lanches.infra.amqp.RabbitMQConfig.ROUTING_KEY,
+                event
+        );
+
+        return pedidoSalvo;
     }
 
     private BigDecimal calcularValor(String tipo, String proteina, String acompanhamento, String bebida, int quantidade) {
@@ -76,9 +90,18 @@ public class PedidoService {
         return subtotal;
     }
 
+    // MÓDULO B - REQUISITO: Consultar pedido específico por ID ✅
     public Pedido buscarPorId(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido não encontrado com ID: " + id));
+                .orElseThrow(() -> new RuntimeException("Pedido não encontrado: " + id));
+    }
+
+    // MÓDULO B - REQUISITO: Atualizar status do pedido para ENTREGUE ✅
+    @Transactional
+    public void marcarComoEntregue(Long pedidoId) {
+        Pedido pedido = buscarPorId(pedidoId);
+        pedido.setStatus(StatusPedido.ENTREGUE);
+        repository.save(pedido);
     }
 
     public void validarPayload(String payload) {

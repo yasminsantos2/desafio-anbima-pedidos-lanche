@@ -11,14 +11,22 @@ import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 
+import com.anbima.lanches.infra.amqp.RabbitMQConfig;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.anbima.lanches.dto.PedidoEvent;
 
 class PedidoServiceTest {
 
     @Mock
     private PedidoRepository repository;
+
+    @Mock
+    private RabbitTemplate rabbitTemplate;
 
     @InjectMocks
     private PedidoService service;
@@ -40,6 +48,7 @@ class PedidoServiceTest {
 
         // VALOR ESPERADO: 20,00 com 10% -> 18,00
         assertEquals(new BigDecimal("18.0000"), pedido.getValor());
+        verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.EXCHANGE_NAME), eq(RabbitMQConfig.ROUTING_KEY), any(PedidoEvent.class));
     }
 
     @Test
@@ -54,6 +63,7 @@ class PedidoServiceTest {
 
         // VALOR ESPERADO: 15,00 * 2 -> 30,00
         assertEquals(new BigDecimal("30.00"), pedido.getValor());
+        verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.EXCHANGE_NAME), eq(RabbitMQConfig.ROUTING_KEY), any(PedidoEvent.class));
     }
 
     @Test
@@ -72,5 +82,33 @@ class PedidoServiceTest {
     void deveLancarExcecaoQuandoPayloadInvalido() {
         String payloadCurto = "HAMBURGUER";
         assertThrows(IllegalArgumentException.class, () -> service.processarPedidoPosicional(payloadCurto));
+    }
+
+    // Teste de sucesso para marcar como entregue
+    @Test
+    void deveMarcarPedidoComoEntregueComSucesso() {
+        Long id = 1L;
+        Pedido pedido = new Pedido();
+        pedido.setId(id);
+        pedido.setStatus(StatusPedido.RECEBIDO);
+
+        when(repository.findById(id)).thenReturn(java.util.Optional.of(pedido));
+        when(repository.save(any(Pedido.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        service.marcarComoEntregue(id);
+
+        assertEquals(StatusPedido.ENTREGUE, pedido.getStatus());
+        org.mockito.Mockito.verify(repository).findById(id);
+        org.mockito.Mockito.verify(repository).save(pedido);
+    }
+
+    // Teste de erro quando o pedido não é encontrado
+    @Test
+    void deveLancarExcecaoQuandoPedidoNaoEncontrado() {
+        Long id = 1L;
+        when(repository.findById(id)).thenReturn(java.util.Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> service.marcarComoEntregue(id));
+        assertEquals("Pedido não encontrado: " + id, exception.getMessage());
     }
 }
