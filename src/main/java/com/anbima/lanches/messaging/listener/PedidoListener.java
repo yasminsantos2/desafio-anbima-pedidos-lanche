@@ -1,4 +1,4 @@
-package com.anbima.lanches.listener;
+package com.anbima.lanches.messaging.listener;
 
 import com.anbima.lanches.dto.PedidoEvent;
 import com.anbima.lanches.service.PedidoService;

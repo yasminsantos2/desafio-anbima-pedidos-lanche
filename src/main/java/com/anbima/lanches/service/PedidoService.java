@@ -3,9 +3,9 @@ package com.anbima.lanches.service;
 import com.anbima.lanches.domain.Pedido;
 import com.anbima.lanches.domain.StatusPedido;
 import com.anbima.lanches.dto.PedidoEvent;
+import com.anbima.lanches.messaging.publisher.PedidoPublisher;
 import com.anbima.lanches.repository.PedidoRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class PedidoService {
 
     private final PedidoRepository repository;
-    private final RabbitTemplate rabbitTemplate;
+    private final PedidoPublisher pedidoPublisher;
 
     @Transactional
     public Pedido salvar(Pedido pedido) {
@@ -54,13 +54,8 @@ public class PedidoService {
 
         Pedido pedidoSalvo = repository.save(pedido);
 
-        // REQUISITO: Enviar evento para o RabbitMQ
-        PedidoEvent event = new PedidoEvent(pedidoSalvo.getId());
-        rabbitTemplate.convertAndSend(
-                com.anbima.lanches.infra.amqp.RabbitMQConfig.EXCHANGE_NAME,
-                com.anbima.lanches.infra.amqp.RabbitMQConfig.ROUTING_KEY,
-                event
-        );
+        // MÓDULO A - REQUISITO: Publicar { "pedidoId": id } na fila pedidos.recebidos ✅
+        pedidoPublisher.publicar(new PedidoEvent(pedidoSalvo.getId()));
 
         return pedidoSalvo;
     }

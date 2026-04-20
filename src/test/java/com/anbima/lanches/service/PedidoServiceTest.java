@@ -2,6 +2,8 @@ package com.anbima.lanches.service;
 
 import com.anbima.lanches.domain.Pedido;
 import com.anbima.lanches.domain.StatusPedido;
+import com.anbima.lanches.dto.PedidoEvent;
+import com.anbima.lanches.messaging.publisher.PedidoPublisher;
 import com.anbima.lanches.repository.PedidoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,14 +13,10 @@ import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 
-import com.anbima.lanches.infra.amqp.RabbitMQConfig;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import com.anbima.lanches.dto.PedidoEvent;
 
 class PedidoServiceTest {
 
@@ -26,7 +24,7 @@ class PedidoServiceTest {
     private PedidoRepository repository;
 
     @Mock
-    private RabbitTemplate rabbitTemplate;
+    private PedidoPublisher pedidoPublisher;
 
     @InjectMocks
     private PedidoService service;
@@ -48,7 +46,7 @@ class PedidoServiceTest {
 
         // VALOR ESPERADO: 20,00 com 10% -> 18,00
         assertEquals(new BigDecimal("18.0000"), pedido.getValor());
-        verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.EXCHANGE_NAME), eq(RabbitMQConfig.ROUTING_KEY), any(PedidoEvent.class));
+        verify(pedidoPublisher).publicar(any(PedidoEvent.class));
     }
 
     @Test
@@ -63,7 +61,7 @@ class PedidoServiceTest {
 
         // VALOR ESPERADO: 15,00 * 2 -> 30,00
         assertEquals(new BigDecimal("30.00"), pedido.getValor());
-        verify(rabbitTemplate).convertAndSend(eq(RabbitMQConfig.EXCHANGE_NAME), eq(RabbitMQConfig.ROUTING_KEY), any(PedidoEvent.class));
+        verify(pedidoPublisher).publicar(any(PedidoEvent.class));
     }
 
     @Test
@@ -82,6 +80,20 @@ class PedidoServiceTest {
     void deveLancarExcecaoQuandoPayloadInvalido() {
         String payloadCurto = "HAMBURGUER";
         assertThrows(IllegalArgumentException.class, () -> service.processarPedidoPosicional(payloadCurto));
+    }
+
+    // Teste: publisher é chamado com pedidoId correto
+    @Test
+    void devePublicarEventoComPedidoIdCorreto() {
+        String payload = "HAMBURGUERCARNE     SALADA    01COCA    ";
+        
+        Pedido pedidoSalvo = new Pedido();
+        pedidoSalvo.setId(42L);
+        when(repository.save(any(Pedido.class))).thenReturn(pedidoSalvo);
+
+        service.processarPedidoPosicional(payload);
+
+        verify(pedidoPublisher).publicar(new PedidoEvent(42L));
     }
 
     // Teste de sucesso para marcar como entregue
