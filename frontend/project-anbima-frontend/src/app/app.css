@@ -101,17 +101,35 @@
 }
 
 .top-bar {
-  height: 60px;
+  height: 64px;
   background-color: white;
-  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  padding: 0 2rem;
-  font-weight: 500;
   color: var(--corp-blue);
 }
 
 .main-content {
-  padding: 2rem;
   flex: 1;
+  overflow-y: auto;
+}
+
+.layout-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 2rem;
+}
+
+.top-bar .layout-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.main-content .layout-container {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
