@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PedidoService } from '../../services/pedido.service';
 import { Pedido } from '../../models/pedido.model';
+import { switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-pedidos',
@@ -18,50 +19,35 @@ export class PedidosComponent implements OnInit {
   protected error = signal<string | null>(null);
 
   ngOnInit() {
-    this.carregarPedidos();
+    this.carregarPedidos(false);
   }
 
-  carregarPedidos() {
+  carregarPedidos(processar: boolean = false) {
     this.loading.set(true);
     this.error.set(null);
     
-    this.pedidoService.listarPedidos().subscribe({
+    const obs$ = processar 
+      ? this.pedidoService.processarFila().pipe(switchMap(() => this.pedidoService.listarPedidos()))
+      : this.pedidoService.listarPedidos();
+
+    obs$.subscribe({
       next: (res) => {
-        this.pedidos.set(res);
+        // Ordenação decrescente por ID para mostrar os mais recentes no topo
+        const ordenados = res.sort((a, b) => b.id - a.id);
+        this.pedidos.set(ordenados);
         this.loading.set(false);
       },
       error: (err) => {
         console.error('Erro ao listar pedidos:', err);
-        let errorMessage = 'Não foi possível conectar ao servidor. Verifique se o backend está rodando na porta 8081.';
-        
-        if (typeof err.error === 'string') {
-          errorMessage = err.error;
-        } else if (err.error?.message) {
-          errorMessage = err.error.message;
-        }
-
-        this.error.set(errorMessage);
+        this.error.set('Não foi possível carregar os pedidos. Verifique o backend.');
         this.loading.set(false);
       }
     });
   }
 
-  ciclarStatus(pedido: Pedido) {
-    const statusOrdem: string[] = ['RECEBIDO', 'EM_PREPARACAO', 'ENTREGUE'];
-    const indexAtual = statusOrdem.indexOf(pedido.status);
-    const proximoIndex = (indexAtual + 1) % statusOrdem.length;
-    
-    // Atualiza localmente (Mock)
-    pedido.status = statusOrdem[proximoIndex] as any;
-    
-    // Opcional: Feedback visual de que foi "alterado"
-    console.log(`Status do pedido #${pedido.id} alterado para ${pedido.status} (Mock)`);
-  }
-
   getStatusClass(status: string): string {
     switch (status) {
       case 'RECEBIDO': return 'status-received';
-      case 'EM_PREPARACAO': return 'status-preparing';
       case 'ENTREGUE': return 'status-delivered';
       default: return '';
     }

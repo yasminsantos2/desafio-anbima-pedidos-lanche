@@ -1,6 +1,7 @@
 package com.anbima.lanches.messaging.listener;
 
 import com.anbima.lanches.dto.PedidoEvent;
+import com.anbima.lanches.infra.amqp.RabbitMQConfig;
 import com.anbima.lanches.service.PedidoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,11 +17,14 @@ public class PedidoListener {
 
     private final PedidoService service;
 
-    // REQUISITO: Escutar a fila "pedidos.recebidos" ✅
-    @RabbitListener(queues = "pedidos.recebidos")
+    // REQUISITO: Escutar a fila "pedidos.recebidos"
+    // @RabbitListener(queues = "pedidos.recebidos")
     public void consumirMensagem(PedidoEvent event) {
-        log.info("Mensagem recebida da fila pedidos.recebidos: {}", event);
+        log.info("Mensagem recebida da fila {}: {}", RabbitMQConfig.QUEUE_NAME, event);
         try {
+            // SIMULAÇÃO: Atraso de 8 segundos para simular processamento pesado/fila
+            Thread.sleep(8000);
+            
             // REQUISITO: Buscar pedido pelo pedidoId e atualizar status = ENTREGUE ✅
             service.marcarComoEntregue(event.getPedidoId());
             log.info("Pedido {} atualizado para ENTREGUE com sucesso.", event.getPedidoId());

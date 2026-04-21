@@ -3,9 +3,12 @@ package com.anbima.lanches.service;
 import com.anbima.lanches.domain.Pedido;
 import com.anbima.lanches.domain.StatusPedido;
 import com.anbima.lanches.dto.PedidoEvent;
-import com.anbima.lanches.messaging.publisher.PedidoPublisher;
+import com.anbima.lanches.infra.amqp.RabbitMQConfig;
 import com.anbima.lanches.repository.PedidoRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,10 +17,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PedidoService {
 
     private final PedidoRepository repository;
-    private final PedidoPublisher pedidoPublisher;
+    private final ApplicationEventPublisher eventPublisher;
+    private final RabbitTemplate rabbitTemplate;
 
     @Transactional
     public Pedido salvar(Pedido pedido) {
@@ -54,8 +59,8 @@ public class PedidoService {
 
         Pedido pedidoSalvo = repository.save(pedido);
 
-        // MÓDULO A - REQUISITO: Publicar { "pedidoId": id } na fila pedidos.recebidos ✅
-        pedidoPublisher.publicar(new PedidoEvent(pedidoSalvo.getId()));
+        // MÓDULO A - Disparar evento local (será publicado no RabbitMQ após o commit)
+        eventPublisher.publishEvent(new PedidoEvent(pedidoSalvo.getId()));
 
         return pedidoSalvo;
     }
@@ -94,9 +99,51 @@ public class PedidoService {
     // MÓDULO B - REQUISITO: Atualizar status do pedido para ENTREGUE ✅
     @Transactional
     public void marcarComoEntregue(Long pedidoId) {
-        Pedido pedido = buscarPorId(pedidoId);
-        pedido.setStatus(StatusPedido.ENTREGUE);
-        repository.save(pedido);
+        atualizarStatus(pedidoId, StatusPedido.ENTREGUE);
+    }
+
+    @Transactional
+    public Pedido atualizarStatus(Long id, StatusPedido status) {
+        Pedido pedido = buscarPorId(id);
+        pedido.setStatus(status);
+        return repository.save(pedido);
+    }
+
+    @Transactional
+    public void processarFila() {
+        log.info("Iniciando processamento manual da fila: {}", RabbitMQConfig.QUEUE_NAME);
+        int processados = 0;
+        Object message;
+        
+        while ((message = rabbitTemplate.receiveAndConvert(RabbitMQConfig.QUEUE_NAME)) != null) {
+            log.info("Mensagem retirada da fila para processamento manual: {}", message);
+            
+            Long pedidoId = null;
+            if (message instanceof PedidoEvent) {
+                pedidoId = ((PedidoEvent) message).getPedidoId();
+            } else if (message instanceof java.util.Map) {
+                // Caso o Jackson tenha deserializado como Map
+                java.util.Map<?, ?> map = (java.util.Map<?, ?>) message;
+                Object idObj = map.get("pedidoId");
+                if (idObj != null) {
+                    pedidoId = Long.valueOf(idObj.toString());
+                }
+            }
+            
+            if (pedidoId != null) {
+                marcarComoEntregue(pedidoId);
+                processados++;
+                log.info("Pedido {} processado e marcado como ENTREGUE via fila manual.", pedidoId);
+            } else {
+                log.warn("Não foi possível extrair o pedidoId da mensagem: {}", message);
+            }
+        }
+        
+        if (processados > 0) {
+            log.info("Processamento manual concluído. Total de pedidos atualizados: {}", processados);
+        } else {
+            log.info("Nenhuma mensagem encontrada na fila para processamento.");
+        }
     }
 
     public void validarPayload(String payload) {

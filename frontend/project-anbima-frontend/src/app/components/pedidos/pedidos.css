@@ -22,6 +22,52 @@
   font-size: 0.95rem;
 }
 
+/* Filter Bar styles */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 0;
+}
+
+.filter-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.filter-options {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-options button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-options button:hover {
+  background: #f8f9fa;
+  border-color: var(--corp-blue);
+  color: var(--corp-blue);
+}
+
+.filter-options button.active {
+  background: var(--corp-blue);
+  border-color: var(--corp-blue);
+  color: white;
+}
+
 .btn-refresh, .btn-action {
   display: flex;
   align-items: center;
@@ -116,11 +162,6 @@ tr:hover {
 .status-received {
   background-color: #ebf8ff;
   color: #2b6cb0;
-}
-
-.status-preparing {
-  background-color: #feebc8;
-  color: #9c4221;
 }
 
 .status-delivered {

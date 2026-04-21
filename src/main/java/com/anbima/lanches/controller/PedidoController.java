@@ -1,11 +1,14 @@
 package com.anbima.lanches.controller;
 
 import com.anbima.lanches.domain.Pedido;
+import com.anbima.lanches.domain.StatusPedido;
 import com.anbima.lanches.service.PedidoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/pedidos")
@@ -38,5 +41,19 @@ public class PedidoController {
     @GetMapping("/{id}")
     public ResponseEntity<Pedido> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(service.buscarPorId(id));
+    }
+
+    // NOVO: PATCH /pedidos/{id}/status → Atualizar status manualmente ✅
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Pedido> atualizarStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String statusStr = body.get("status");
+        StatusPedido status = StatusPedido.valueOf(statusStr);
+        return ResponseEntity.ok(service.atualizarStatus(id, status));
+    }
+
+    @PostMapping("/processar-fila")
+    public ResponseEntity<Void> processarFila() {
+        service.processarFila();
+        return ResponseEntity.ok().build();
     }
 }

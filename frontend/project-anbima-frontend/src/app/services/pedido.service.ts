@@ -18,4 +18,12 @@ export class PedidoService {
     const headers = new HttpHeaders({ 'Content-Type': 'text/plain' });
     return this.http.post<Pedido>(`${this.apiUrl}/posicional`, payload, { headers });
   }
+
+  atualizarStatus(id: number, status: string): Observable<Pedido> {
+    return this.http.patch<Pedido>(`${this.apiUrl}/${id}/status`, { status });
+  }
+
+  processarFila(): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/processar-fila`, {});
+  }
 }

@@ -1,6 +1,5 @@
 export enum StatusPedido {
   RECEBIDO = 'RECEBIDO',
-  EM_PREPARACAO = 'EM_PREPARACAO',
   ENTREGUE = 'ENTREGUE'
 }
 
