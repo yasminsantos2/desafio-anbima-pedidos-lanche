@@ -1,0 +1,64 @@
+<div class="page-container">
+  <div class="header">
+    <div class="title-group">
+      <h1>Pedidos</h1>
+      <p>Gerencie todos os pedidos realizados no sistema.</p>
+    </div>
+    <button class="btn-refresh" [disabled]="loading()" (click)='carregarPedidos()'>
+      <svg [class.spin]="loading()" xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
+      <span>Atualizar</span>
+    </button>
+  </div>
+
+  <div *ngIf="error()" class="message error">
+    <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor"><path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240Zm40 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
+    <span>{{ error() }}</span>
+  </div>
+
+  <div class="table-container">
+    <table *ngIf="!loading() || pedidos().length > 0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tipo Lanche</th>
+          <th>Proteína</th>
+          <th>Acompanhamento</th>
+          <th>Qtd</th>
+          <th>Bebida</th>
+          <th>Valor</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pedido of pedidos()">
+          <td class="id-col">#{{ pedido.id }}</td>
+          <td>{{ pedido.tipoLanche }}</td>
+          <td>{{ pedido.proteina }}</td>
+          <td>{{ pedido.acompanhamento }}</td>
+          <td>{{ pedido.quantidade }}</td>
+          <td>{{ pedido.bebida }}</td>
+          <td class="valor-col">{{ pedido.valor | currency:'BRL' }}</td>
+          <td>
+            <span class="badge" [ngClass]="getStatusClass(pedido.status)">
+              {{ pedido.status }}
+            </span>
+          </td>
+          <td>
+            <button class="btn-action" (click)="ciclarStatus(pedido)" title="Próximo Status">
+              <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor"><path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/></svg>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="pedidos().length === 0 && !loading()">
+          <td colspan="9" class="empty-state">Nenhum pedido encontrado.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="loading() && pedidos().length === 0" class="loading-state">
+      <div class="loader"></div>
+      <p>Carregando pedidos...</p>
+    </div>
+  </div>
+</div>
