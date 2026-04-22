@@ -112,9 +112,15 @@ public class PedidoService {
             Object message = rabbitTemplate.receiveAndConvert(RabbitMQConfig.QUEUE_NAME);
             if (message == null) break;
 
+            log.info("Objeto cru recebido da fila: class={}, content={}", 
+                     message.getClass().getName(), 
+                     message);
+
             Long extractedId = extrairIdDaMensagem(message);
+            log.info("Mensagem lida da fila. ID extraído: {}", extractedId);
+            
             if (extractedId != null && extractedId.equals(targetId)) {
-                log.info("Pedido {} encontrado na fila! Marcando como ENTREGUE.", targetId);
+                log.info("Pedido {} encontrado na fila! Processando...", targetId);
                 marcarComoEntregue(targetId);
                 encontrado = true;
                 break;
@@ -127,7 +133,8 @@ public class PedidoService {
         }
 
         if (!encontrado) {
-            throw new RuntimeException("O pedido " + targetId + " não foi encontrado na fila. Verifique se ele já foi processado.");
+            log.warn("Fim da busca na fila. Pedido {} não foi encontrado após {} tentativas.", targetId, attempts);
+            throw new IllegalArgumentException("O pedido " + targetId + " não está disponível para finalização na fila. Ele pode já ter sido processado ou ainda não foi enfileirado.");
         }
     }
 
@@ -186,9 +193,9 @@ public class PedidoService {
 
     private void validarCampoAlfanumerico(String valor, String nomeCampo) {
         // RF-03: Campos do tipo A devem aceitar letras, números e espaços (Alfanuméricos)
-        if (!valor.matches("[A-Z0-9 ]+")) {
+        if (!valor.matches("[A-Za-z0-9 ]+")) {
             throw new IllegalArgumentException(
-                    "O campo " + nomeCampo + " deve conter apenas letras maiúsculas, números e espaços."
+                    "O campo " + nomeCampo + " deve conter apenas letras, números e espaços."
             );
         }
     }

@@ -85,8 +85,12 @@ public class PedidoController {
         @ApiResponse(responseCode = "400", description = "Pedido não encontrado na fila do RabbitMQ ou erro no processamento")
     })
     @PostMapping("/{id}/entregar")
-    public ResponseEntity<Void> entregar(@PathVariable Long id) {
-        service.processarPedidoEspecificoDaFila(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> entregar(@PathVariable Long id) {
+        try {
+            service.processarPedidoEspecificoDaFila(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
