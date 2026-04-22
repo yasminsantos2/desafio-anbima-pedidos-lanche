@@ -15,7 +15,7 @@ public class PedidoPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
-    // REQUISITO: Publicar mensagem na fila pedidos.recebidos com esse JSON: {"pedidoId": <ID>}
+    // RF-09: Publicar mensagem JSON {pedidoId: <ID>} na fila pedidos.recebidos após salvar o pedido.
     public void publicar(PedidoEvent event) {
         log.info("Publicando evento na fila {}: {}", RabbitMQConfig.QUEUE_NAME, event);
         rabbitTemplate.convertAndSend(

@@ -34,6 +34,7 @@ public class PedidoService {
         return repository.findAll();
     }
 
+    // RF-05: Mapear a linha posicional para um objeto Pedido
     @Transactional
     public Pedido processarPedidoPosicional(String payload) {
         // REQUISITO: Validações da string posicional
@@ -55,7 +56,7 @@ public class PedidoService {
         pedido.setQuantidade(quantidade);
         pedido.setBebida(bebida);
         pedido.setValor(valorTotal);
-        pedido.setStatus(StatusPedido.RECEBIDO); // REQUISITO: Salvar no banco (status = RECEBIDO)
+        pedido.setStatus(StatusPedido.RECEBIDO); // RF-08: Persistir o pedido no banco com status inicial RECEBIDO
 
         Pedido pedidoSalvo = repository.save(pedido);
 
@@ -65,6 +66,7 @@ public class PedidoService {
         return pedidoSalvo;
     }
 
+    // RF-06: Calcular preço base (HAMBURGUER=20, PASTEL=15, outros=12)
     private BigDecimal calcularValor(String tipo, String proteina, String acompanhamento, String bebida, int quantidade) {
         BigDecimal precoBase;
         
@@ -79,7 +81,7 @@ public class PedidoService {
         
         BigDecimal subtotal = precoBase.multiply(new BigDecimal(quantidade));
         
-        // REQUISITO: Desconto de 10% para o combo (HAMBURGUER + CARNE + SALADA)
+        // RF-07: Aplicar 10% de desconto quando o pedido for HAMBURGUER + CARNE + SALADA
         if ("HAMBURGUER".equalsIgnoreCase(tipo) && 
             "CARNE".equalsIgnoreCase(proteina) && 
             "SALADA".equalsIgnoreCase(acompanhamento)) {
@@ -153,7 +155,7 @@ public class PedidoService {
             throw new IllegalArgumentException("O payload não pode ser nulo ou vazio.");
         }
 
-        // REQUISITO: Deve ter exatamente 40 caracteres
+        // RF-02: A linha deve ter exatamente 40 caracteres
         if (payload.length() != 40) {
             throw new IllegalArgumentException(
                     "O payload deve ter exatamente 40 caracteres. Tamanho recebido: " + payload.length()
@@ -175,7 +177,7 @@ public class PedidoService {
         // REQUISITO: Campos numéricos (N)
         validarCampoNumerico(quantidadeStr, "quantidade");
 
-        // REQUISITO: Quantidade deve ser numérica entre 01 e 99
+        // RF-04: Quantidade deve ser numérica e estar entre 01 e 99
         int quantidade = Integer.parseInt(quantidadeStr);
         if (quantidade < 1 || quantidade > 99) {
             throw new IllegalArgumentException("O campo quantidade deve estar entre 01 e 99.");
@@ -183,9 +185,10 @@ public class PedidoService {
     }
 
     private void validarCampoAlfanumerico(String valor, String nomeCampo) {
-        if (!valor.matches("[A-Z ]+")) {
+        // RF-03: Campos do tipo A devem aceitar letras, números e espaços (Alfanuméricos)
+        if (!valor.matches("[A-Z0-9 ]+")) {
             throw new IllegalArgumentException(
-                    "O campo " + nomeCampo + " deve conter apenas letras maiúsculas e espaços."
+                    "O campo " + nomeCampo + " deve conter apenas letras maiúsculas, números e espaços."
             );
         }
     }

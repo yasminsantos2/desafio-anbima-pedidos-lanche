@@ -4,9 +4,17 @@
       <h1>Pedidos</h1>
       <p>Acompanhe o status de todos os pedidos.</p>
     </div>
+    <!-- RF-16: Disponibilizar botão Atualizar para recarregar os dados da tabela -->
+    <button class="btn-refresh" (click)="carregarPedidos()" [disabled]="loading()" title="Recarregar Lista">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20" fill="currentColor">
+        <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-110h80v280H520v-80h168q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-44t87-116h84q-28 106-114 173t-196 67Z"/>
+      </svg>
+      <span>Atualizar</span>
+    </button>
   </div>
 
   <div class="filter-bar">
+    <!-- RF-17: Permitir filtro de pedidos por status na tela Pedidos -->
     <span class="filter-label">Filtrar por Status:</span>
     <div class="filter-options">
       <button [class.active]="statusFilter() === 'TODOS'" (click)="setFilter('TODOS')">
@@ -30,6 +38,7 @@
   </div>
 
   <div class="table-container">
+    <!-- RF-15: Exibir tabela com id, tipoLanche, proteina, acompanhamento, quantidade, bebida, valor e status -->
     <table *ngIf="!loading() || pedidosFiltrados().length > 0">
       <thead>
         <tr>

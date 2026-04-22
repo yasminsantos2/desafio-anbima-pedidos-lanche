@@ -19,12 +19,15 @@ public class PedidoListener {
 
     // @RabbitListener(queues = RabbitMQConfig.QUEUE_NAME)
     public void consumirMensagem(PedidoEvent event) {
-        log.info("Mensagem recebida da fila {}: {}", RabbitMQConfig.QUEUE_NAME, event); // REQUISITO: Para cada mensagem: buscar o pedido no banco pelo ID
+        log.info("Mensagem recebida da fila {}: {}", RabbitMQConfig.QUEUE_NAME, event); // REQUISITO: Para cada
+                                                                                        // mensagem: buscar o pedido no
+                                                                                        // banco pelo ID
         try {
             // SIMULAÇÃO: Atraso de 8 segundos para simular processamento pesado/fila
-            Thread.sleep(8000);
-            
-            // REQUISITO: buscar o pedido no banco e atualizar o pedido correspondente para status=ENTREGUE e persiste
+            // Thread.sleep(5000);
+
+            // REQUISITO: buscar o pedido no banco e atualizar o pedido correspondente para
+            // status=ENTREGUE e persiste
             service.marcarComoEntregue(event.getPedidoId());
             log.info("Pedido {} atualizado para ENTREGUE com sucesso.", event.getPedidoId());
         } catch (Exception e) {

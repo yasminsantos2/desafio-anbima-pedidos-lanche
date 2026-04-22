@@ -33,6 +33,7 @@ public class PedidoController {
                      content = @Content(schema = @Schema(implementation = Pedido.class))),
         @ApiResponse(responseCode = "400", description = "Payload inválido ou fora do padrão de 40 caracteres")
     })
+    // RF-01: Disponibilizar POST /pedidos/posicional com Content-Type text/plain para receber uma linha fixa de 40 caracteres.
     @PostMapping(value = "/posicional", consumes = "text/plain")
     public ResponseEntity<?> receberPedidoPosicional(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -60,6 +61,7 @@ public class PedidoController {
     }
 
     @Operation(summary = "Listar todos os pedidos", description = "Retorna uma lista de todos os pedidos cadastrados no sistema.")
+    // RF-12: Disponibilizar GET /pedidos para listar todos os pedidos.
     @GetMapping
     public java.util.List<Pedido> listar() {
         return service.listarTodos();
@@ -70,6 +72,7 @@ public class PedidoController {
         @ApiResponse(responseCode = "200", description = "Pedido encontrado"),
         @ApiResponse(responseCode = "404", description = "Pedido não encontrado")
     })
+    // RF-13: Disponibilizar GET /pedidos/{id} para consultar um pedido específico.
     @GetMapping("/{id}")
     public ResponseEntity<Pedido> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(service.buscarPorId(id));

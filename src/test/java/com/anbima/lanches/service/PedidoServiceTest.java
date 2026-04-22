@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 
@@ -18,13 +19,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+// RF-18: Implementar testes unitários para regras de validação, conversão, cálculo de valor e atualização de status.
 class PedidoServiceTest {
 
     @Mock
     private PedidoRepository repository;
 
     @Mock
-    private PedidoPublisher pedidoPublisher;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PedidoService service;
@@ -46,7 +48,7 @@ class PedidoServiceTest {
 
         // VALOR ESPERADO: 20,00 com 10% -> 18,00
         assertEquals(new BigDecimal("18.0000"), pedido.getValor());
-        verify(pedidoPublisher).publicar(any(PedidoEvent.class));
+        verify(eventPublisher).publishEvent(any(PedidoEvent.class));
     }
 
     @Test
@@ -61,7 +63,7 @@ class PedidoServiceTest {
 
         // VALOR ESPERADO: 15,00 * 2 -> 30,00
         assertEquals(new BigDecimal("30.00"), pedido.getValor());
-        verify(pedidoPublisher).publicar(any(PedidoEvent.class));
+        verify(eventPublisher).publishEvent(any(PedidoEvent.class));
     }
 
     @Test
@@ -93,7 +95,7 @@ class PedidoServiceTest {
 
         service.processarPedidoPosicional(payload);
 
-        verify(pedidoPublisher).publicar(new PedidoEvent(42L));
+        verify(eventPublisher).publishEvent(new PedidoEvent(42L));
     }
 
     // Teste de sucesso para marcar como entregue
