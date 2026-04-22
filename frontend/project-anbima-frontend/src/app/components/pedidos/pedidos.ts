@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PedidoService } from '../../services/pedido.service';
 import { Pedido } from '../../models/pedido.model';
@@ -16,6 +16,19 @@ export class PedidosComponent implements OnInit {
   protected pedidos = signal<Pedido[]>([]);
   protected loading = signal(false);
   protected error = signal<string | null>(null);
+  
+  protected statusFilter = signal<string>('TODOS');
+
+  protected pedidosFiltrados = computed(() => {
+    const todos = this.pedidos();
+    const filtro = this.statusFilter();
+    
+    if (filtro === 'TODOS') {
+      return todos;
+    }
+    
+    return todos.filter(p => p.status === filtro);
+  });
 
   ngOnInit() {
     this.carregarPedidos();
@@ -51,6 +64,10 @@ export class PedidosComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  setFilter(status: string) {
+    this.statusFilter.set(status);
   }
 
   getStatusClass(status: string): string {

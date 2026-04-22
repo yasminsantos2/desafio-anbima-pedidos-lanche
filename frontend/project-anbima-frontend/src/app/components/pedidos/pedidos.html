@@ -6,6 +6,21 @@
     </div>
   </div>
 
+  <div class="filter-bar">
+    <span class="filter-label">Filtrar por Status:</span>
+    <div class="filter-options">
+      <button [class.active]="statusFilter() === 'TODOS'" (click)="setFilter('TODOS')">
+        Todos
+      </button>
+      <button [class.active]="statusFilter() === 'RECEBIDO'" (click)="setFilter('RECEBIDO')">
+        Recebidos
+      </button>
+      <button [class.active]="statusFilter() === 'ENTREGUE'" (click)="setFilter('ENTREGUE')">
+        Entregues
+      </button>
+    </div>
+  </div>
+
   <div *ngIf="error()" class="message error">
     <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24" fill="currentColor">
       <path
@@ -15,7 +30,7 @@
   </div>
 
   <div class="table-container">
-    <table *ngIf="!loading() || pedidos().length > 0">
+    <table *ngIf="!loading() || pedidosFiltrados().length > 0">
       <thead>
         <tr>
           <th>ID</th>
@@ -30,7 +45,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let pedido of pedidos()">
+        <tr *ngFor="let pedido of pedidosFiltrados()">
           <td class="id-col">#{{ pedido.id }}</td>
           <td>{{ pedido.tipoLanche }}</td>
           <td>{{ pedido.proteina }}</td>
@@ -57,11 +72,11 @@
       </tbody>
     </table>
 
-    <div *ngIf="pedidos().length === 0 && !loading()" class="empty-state">
-      <p>Nenhum pedido encontrado.</p>
+    <div *ngIf="pedidosFiltrados().length === 0 && !loading()" class="empty-state">
+      <p>Nenhum pedido encontrado para o filtro selecionado.</p>
     </div>
 
-    <div *ngIf="loading() && pedidos().length === 0" class="loading-state">
+    <div *ngIf="loading() && pedidosFiltrados().length === 0" class="loading-state">
       <div class="loader"></div>
       <p>Carregando pedidos...</p>
     </div>
