@@ -42,6 +42,16 @@ services:
     networks:
       - lanches-network
 
+  frontend:
+    build: ./frontend/project-anbima-frontend
+    container_name: frontend-lanches
+    ports:
+      - "4200:4200"
+    depends_on:
+      - app
+    networks:
+      - lanches-network
+
 volumes:
   postgres_data:
 

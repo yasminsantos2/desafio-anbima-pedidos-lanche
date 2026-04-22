@@ -24,24 +24,21 @@ O sistema segue rigorosamente o layout abaixo para todas as transações:
 - **Docker** e **Docker Compose** instalados.
 - **Node.js** (v18+) - Necessário apenas para rodar o frontend localmente.
 
-### 2. Rodando o Backend (Docker)
-Este é o método recomendado, pois sobe o Banco de Dados (Postgres), a Fila (RabbitMQ) e a Aplicação Java automaticamente.
+### 2. Rodando o Ambiente Completo (Docker)
+Este é o método recomendado. Um único comando sobe toda a infraestrutura: Banco de Dados (PostgreSQL), Fila (RabbitMQ), Backend (Java) e Frontend (Angular).
 
 No diretório raiz do projeto, execute:
 ```bash
-docker-compose down -v  # Limpa o ambiente anterior (opcional)
+docker-compose down -v  # Limpa o ambiente anterior e o banco
 docker-compose up --build -d
 ```
 
-### 3. Rodando o Frontend (Angular)
-O frontend fornece um **Assistente de Mapeamento** e uma **Régua Visual** para facilitar a criação de pedidos sem erros de contagem.
+### 3. Acesso aos Serviços
+Após os containers subirem, os serviços estarão disponíveis em:
 
-```bash
-cd frontend/project-anbima-frontend
-npm install
-npm start
-```
-Acesse: [http://localhost:4200](http://localhost:4200)
+- **Frontend (Assistente)**: [http://localhost:4200](http://localhost:4200)
+- **Backend (API/Swagger)**: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
+- **RabbitMQ**: [http://localhost:15672](http://localhost:15672) (guest/guest)
 
 ---
 
