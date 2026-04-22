@@ -55,7 +55,7 @@ public class PedidoService {
         pedido.setQuantidade(quantidade);
         pedido.setBebida(bebida);
         pedido.setValor(valorTotal);
-        pedido.setStatus(StatusPedido.RECEBIDO);
+        pedido.setStatus(StatusPedido.RECEBIDO); // REQUISITO: Salvar no banco (status = RECEBIDO)
 
         Pedido pedidoSalvo = repository.save(pedido);
 
@@ -96,54 +96,56 @@ public class PedidoService {
                 .orElseThrow(() -> new RuntimeException("Pedido não encontrado: " + id));
     }
 
-    // MÓDULO B - REQUISITO: Atualizar status do pedido para ENTREGUE ✅
+    @Transactional
+    public void processarPedidoEspecificoDaFila(Long targetId) {
+        // REQUISITO: Valida se o pedido está na fila do RabbitMQ
+        log.info("Buscando pedido {} na fila para processamento granular...", targetId);
+        
+        int maxAttempts = 100; 
+        int attempts = 0;
+        boolean encontrado = false;
+
+        while (attempts < maxAttempts) {
+            // REQUISITO: Consome a mensagem para validar sua existência física na fila
+            Object message = rabbitTemplate.receiveAndConvert(RabbitMQConfig.QUEUE_NAME);
+            if (message == null) break;
+
+            Long extractedId = extrairIdDaMensagem(message);
+            if (extractedId != null && extractedId.equals(targetId)) {
+                log.info("Pedido {} encontrado na fila! Marcando como ENTREGUE.", targetId);
+                marcarComoEntregue(targetId);
+                encontrado = true;
+                break;
+            } else {
+                // Devolve para a fila para outros processamentos
+                rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY, message);
+                log.debug("Mensagem id={} não é o alvo. Reenfileirada.", extractedId);
+            }
+            attempts++;
+        }
+
+        if (!encontrado) {
+            throw new RuntimeException("O pedido " + targetId + " não foi encontrado na fila. Verifique se ele já foi processado.");
+        }
+    }
+
+    private Long extrairIdDaMensagem(Object message) {
+        if (message instanceof PedidoEvent) {
+            return ((PedidoEvent) message).getPedidoId();
+        } else if (message instanceof java.util.Map) {
+            java.util.Map<?, ?> map = (java.util.Map<?, ?>) message;
+            Object idObj = map.get("pedidoId");
+            return idObj != null ? Long.valueOf(idObj.toString()) : null;
+        }
+        return null;
+    }
+
+    // MÓDULO B - REQUISITO: buscar o pedido no banco e atualizar o pedido correspondente para status=ENTREGUE e persiste
     @Transactional
     public void marcarComoEntregue(Long pedidoId) {
-        atualizarStatus(pedidoId, StatusPedido.ENTREGUE);
-    }
-
-    @Transactional
-    public Pedido atualizarStatus(Long id, StatusPedido status) {
-        Pedido pedido = buscarPorId(id);
-        pedido.setStatus(status);
-        return repository.save(pedido);
-    }
-
-    @Transactional
-    public void processarFila() {
-        log.info("Iniciando processamento manual da fila: {}", RabbitMQConfig.QUEUE_NAME);
-        int processados = 0;
-        Object message;
-        
-        while ((message = rabbitTemplate.receiveAndConvert(RabbitMQConfig.QUEUE_NAME)) != null) {
-            log.info("Mensagem retirada da fila para processamento manual: {}", message);
-            
-            Long pedidoId = null;
-            if (message instanceof PedidoEvent) {
-                pedidoId = ((PedidoEvent) message).getPedidoId();
-            } else if (message instanceof java.util.Map) {
-                // Caso o Jackson tenha deserializado como Map
-                java.util.Map<?, ?> map = (java.util.Map<?, ?>) message;
-                Object idObj = map.get("pedidoId");
-                if (idObj != null) {
-                    pedidoId = Long.valueOf(idObj.toString());
-                }
-            }
-            
-            if (pedidoId != null) {
-                marcarComoEntregue(pedidoId);
-                processados++;
-                log.info("Pedido {} processado e marcado como ENTREGUE via fila manual.", pedidoId);
-            } else {
-                log.warn("Não foi possível extrair o pedidoId da mensagem: {}", message);
-            }
-        }
-        
-        if (processados > 0) {
-            log.info("Processamento manual concluído. Total de pedidos atualizados: {}", processados);
-        } else {
-            log.info("Nenhuma mensagem encontrada na fila para processamento.");
-        }
+        Pedido pedido = buscarPorId(pedidoId);
+        pedido.setStatus(StatusPedido.ENTREGUE);
+        repository.save(pedido);
     }
 
     public void validarPayload(String payload) {

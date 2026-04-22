@@ -78,7 +78,7 @@ export class NovoPedidoComponent {
         let errorMessage = 'Falha na comunicação com o servidor.';
         
         if (err.status === 0) {
-          errorMessage = 'Não foi possível conectar ao servidor (Verifique se o backend está rodando na porta 8081).';
+          errorMessage = 'Não foi possível conectar ao servidor (Verifique se o backend está rodando na porta 8080).';
         } else if (typeof err.error === 'string') {
           errorMessage = err.error;
         } else if (err.error?.message) {

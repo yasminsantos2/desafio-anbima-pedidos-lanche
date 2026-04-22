@@ -151,6 +151,15 @@ tr:hover {
   color: #2d3748;
 }
 
+.actions-col {
+  text-align: right;
+  width: 180px;
+}
+
+.actions-col .btn-action {
+  margin-left: auto;
+}
+
 .badge {
   padding: 0.25rem 0.6rem;
   border-radius: 4px;

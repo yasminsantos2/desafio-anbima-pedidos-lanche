@@ -8,7 +8,7 @@ import { Pedido } from '../models/pedido.model';
 })
 export class PedidoService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8081/pedidos';
+  private apiUrl = 'http://localhost:8080/pedidos';
 
   listarPedidos(): Observable<Pedido[]> {
     return this.http.get<Pedido[]>(this.apiUrl);
@@ -19,11 +19,7 @@ export class PedidoService {
     return this.http.post<Pedido>(`${this.apiUrl}/posicional`, payload, { headers });
   }
 
-  atualizarStatus(id: number, status: string): Observable<Pedido> {
-    return this.http.patch<Pedido>(`${this.apiUrl}/${id}/status`, { status });
-  }
-
-  processarFila(): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/processar-fila`, {});
+  marcarComoEntregue(id: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/entregar`, {});
   }
 }

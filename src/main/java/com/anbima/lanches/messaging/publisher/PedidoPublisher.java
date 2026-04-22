@@ -8,7 +8,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 // MÓDULO A - Publisher/Produtor
-// REQUISITO: Publicar { "pedidoId": id } na fila pedidos.recebidos ✅
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -16,6 +15,7 @@ public class PedidoPublisher {
 
     private final RabbitTemplate rabbitTemplate;
 
+    // REQUISITO: Publicar mensagem na fila pedidos.recebidos com esse JSON: {"pedidoId": <ID>}
     public void publicar(PedidoEvent event) {
         log.info("Publicando evento na fila {}: {}", RabbitMQConfig.QUEUE_NAME, event);
         rabbitTemplate.convertAndSend(
